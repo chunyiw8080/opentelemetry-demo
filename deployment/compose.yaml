@@ -1,0 +1,30 @@
+x-otel: &otel
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
+  OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+  OTEL_TRACES_EXPORTER: otlp
+  OTEL_METRICS_EXPORTER: none
+  OTEL_LOGS_EXPORTER: none
+  OTEL_TRACES_SAMPLER: always_on
+  OTEL_PROPAGATORS: tracecontext,baggage
+  OTEL_RESOURCE_ATTRIBUTES: service.namespace=otel-demo,deployment.environment.name=demo
+services:
+  jaeger:
+    image: jaegertracing/jaeger:2.6.0
+    ports: ["127.0.0.1:16686:16686", "127.0.0.1:4318:4318"]
+  inventory-service:
+    build: {context: .., dockerfile: deployment/Dockerfile, args: {SERVICE: inventory-service}}
+    environment:
+      <<: *otel
+      OTEL_SERVICE_NAME: inventory-service
+    depends_on: [jaeger]
+  order-service:
+    build: {context: .., dockerfile: deployment/Dockerfile, args: {SERVICE: order-service}}
+    environment:
+      <<: *otel
+      OTEL_SERVICE_NAME: order-service
+      INVENTORY_URL: http://inventory-service:8080
+    depends_on: [inventory-service]
+  frontend:
+    build: {context: .., dockerfile: deployment/Dockerfile.frontend}
+    ports: ["127.0.0.1:8080:8080"]
+    depends_on: [order-service, jaeger]

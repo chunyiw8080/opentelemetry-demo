@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - all.yaml
+images:
+  - name: otel-demo/order-service
+    newName: otel-demo/order-service
+    newTag: 1.0.0
+  - name: otel-demo/inventory-service
+    newName: otel-demo/inventory-service
+    newTag: 1.0.0
+  - name: otel-demo/frontend
+    newName: otel-demo/frontend
+    newTag: 1.0.0
